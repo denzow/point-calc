@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>福利厚生ポイント計算ツール</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', sans-serif;
+    background: #f0f2f5;
+    color: #333;
+    line-height: 1.6;
+  }
+  .container { max-width: 1000px; margin: 0 auto; padding: 20px; }
+  h1 {
+    text-align: center;
+    margin: 24px 0;
+    color: #1a2332;
+    font-size: 1.6rem;
+  }
+  .card {
+    background: #fff;
+    border-radius: 10px;
+    padding: 24px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.07);
+  }
+  .card h2 {
+    font-size: 1.05rem;
+    margin-bottom: 16px;
+    color: #1a2332;
+    border-left: 4px solid #4a90d9;
+    padding-left: 12px;
+  }
+  .form-group { margin-bottom: 12px; }
+  .form-group label {
+    display: block;
+    font-size: 0.88rem;
+    margin-bottom: 4px;
+    color: #555;
+    font-weight: 500;
+  }
+  .form-group input {
+    width: 100%;
+    padding: 9px 12px;
+    border: 1px solid #d0d5dd;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    transition: border-color 0.15s;
+  }
+  .form-group input:focus {
+    outline: none;
+    border-color: #4a90d9;
+    box-shadow: 0 0 0 3px rgba(74,144,217,0.15);
+  }
+  .info-text {
+    font-size: 0.8rem;
+    color: #888;
+    margin-top: 4px;
+  }
+  .rental-item {
+    background: #f8f9fb;
+    border: 1px solid #e4e7ec;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 12px;
+    position: relative;
+  }
+  .rental-fields {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 10px;
+  }
+  .btn-remove {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: none;
+    border: none;
+    color: #d14;
+    cursor: pointer;
+    font-size: 1.3rem;
+    line-height: 1;
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+  .btn-remove:hover { background: #fee; }
+  .btn-add {
+    display: block;
+    width: 100%;
+    padding: 12px;
+    background: #fff;
+    border: 2px dashed #ccd3dd;
+    border-radius: 8px;
+    color: #4a90d9;
+    font-size: 0.92rem;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+    margin-top: 8px;
+    font-weight: 500;
+  }
+  .btn-add:hover { background: #f0f5ff; border-color: #4a90d9; }
+  .btn-calculate {
+    display: block;
+    width: 100%;
+    padding: 14px;
+    font-size: 1.05rem;
+    font-weight: 600;
+    background: #1a2332;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    margin-bottom: 20px;
+    transition: background 0.15s;
+  }
+  .btn-calculate:hover { background: #2d3d52; }
+  .optional {
+    color: #aaa;
+    font-size: 0.75rem;
+    font-weight: 400;
+  }
+  .result-section { display: none; }
+  .result-section.active { display: block; }
+  .table-wrapper { overflow-x: auto; margin-top: 12px; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.88rem;
+    white-space: nowrap;
+  }
+  thead th {
+    background: #1a2332;
+    color: #fff;
+    padding: 10px 14px;
+    text-align: right;
+    font-weight: 500;
+  }
+  thead th:first-child { text-align: center; border-radius: 6px 0 0 0; }
+  thead th:last-child { border-radius: 0 6px 0 0; }
+  td {
+    padding: 9px 14px;
+    border-bottom: 1px solid #eef0f3;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+  td:first-child { text-align: center; font-weight: 500; }
+  tr:nth-child(even) { background: #f8f9fb; }
+  tr:hover { background: #eef4fd; }
+  .negative { color: #d14; font-weight: 600; }
+  .zero-payment { color: #aaa; }
+  .actions { margin-top: 16px; display: flex; gap: 12px; }
+  .btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: background 0.15s;
+  }
+  .btn-csv { background: #27ae60; color: #fff; }
+  .btn-csv:hover { background: #219a52; }
+  .error-msg {
+    background: #fff5f5;
+    border: 1px solid #fecaca;
+    color: #d14;
+    padding: 12px 16px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    font-size: 0.9rem;
+  }
+  @media (max-width: 600px) {
+    .rental-fields { grid-template-columns: 1fr; }
+    .container { padding: 12px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>福利厚生ポイント計算ツール</h1>
+
+  <div class="card">
+    <h2>基本情報</h2>
+    <div class="form-group">
+      <label>現在の残ポイント数</label>
+      <input type="number" id="currentPoints" value="0" min="0" step="100">
+      <div class="info-text">今月の支給前の残ポイントを入力してください（毎月5,000pt支給、繰越上限20,000pt）</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>既存レンタル家電</h2>
+    <div id="existingRentals"></div>
+    <button class="btn-add" onclick="addExistingRental()">＋ 既存レンタルを追加</button>
+  </div>
+
+  <div class="card">
+    <h2>新規レンタル家電</h2>
+    <div id="newRentals"></div>
+  </div>
+
+  <button class="btn-calculate" onclick="calculate()">計算する</button>
+
+  <div id="errorMsg" class="error-msg" style="display:none;"></div>
+
+  <div id="resultSection" class="result-section">
+    <div class="card">
+      <h2>計算結果</h2>
+      <div class="table-wrapper" id="tableWrapper"></div>
+      <div class="actions">
+        <button class="btn btn-csv" onclick="downloadCSV()">CSV ダウンロード</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const MONTHLY_SUPPLY = 5000;
+const MAX_CARRYOVER = 20000;
+
+let calculatedResults = [];
+let calculatedExistingNames = [];
+let calculatedNewNames = [];
+
+function getCurrentMonth() {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+}
+
+function generateMonths(start, end) {
+  const months = [];
+  let [year, month] = start.split('-').map(Number);
+  const [endYear, endMonth] = end.split('-').map(Number);
+  while (year < endYear || (year === endYear && month <= endMonth)) {
+    months.push(`${year}-${String(month).padStart(2, '0')}`);
+    month++;
+    if (month > 12) { month = 1; year++; }
+  }
+  return months;
+}
+
+function formatMonth(ym) {
+  const [y, m] = ym.split('-');
+  return `${y}年${parseInt(m)}月`;
+}
+
+function formatPt(n) {
+  return n.toLocaleString('ja-JP');
+}
+
+function createRentalHTML(type, id) {
+  const isNew = type === 'new';
+  const discountFields = isNew ? `
+    <div class="form-group">
+      <label>割引月額ポイント <span class="optional">（任意）</span></label>
+      <input type="number" class="r-discount-monthly" min="0" step="100" placeholder="例: 1500">
+    </div>
+    <div class="form-group">
+      <label>割引月数 <span class="optional">（任意）</span></label>
+      <input type="number" class="r-discount-months" min="0" placeholder="例: 3">
+    </div>
+  ` : '';
+  const removeBtn = isNew ? '' : `<button class="btn-remove" onclick="this.parentElement.remove()" title="削除">&times;</button>`;
+
+  return `
+    <div class="rental-item" data-id="${id}">
+      ${removeBtn}
+      <div class="rental-fields">
+        <div class="form-group">
+          <label>名前</label>
+          <input type="text" class="r-name" placeholder="例: ルンバ">
+        </div>
+        <div class="form-group">
+          <label>月額ポイント</label>
+          <input type="number" class="r-monthly" min="0" step="100" placeholder="例: 3000">
+        </div>
+        <div class="form-group">
+          <label>支払い完了予定月</label>
+          <input type="month" class="r-end" value="${getCurrentMonth()}">
+        </div>
+        ${discountFields}
+      </div>
+    </div>
+  `;
+}
+
+let rentalIdCounter = 0;
+
+function addExistingRental() {
+  const container = document.getElementById('existingRentals');
+  container.insertAdjacentHTML('beforeend', createRentalHTML('existing', rentalIdCounter++));
+}
+
+function addNewRental() {
+  const container = document.getElementById('newRentals');
+  container.insertAdjacentHTML('beforeend', createRentalHTML('new', rentalIdCounter++));
+}
+
+function parseRentals(containerId, isNew) {
+  const items = document.querySelectorAll(`#${containerId} .rental-item`);
+  const rentals = [];
+  items.forEach(el => {
+    const name = el.querySelector('.r-name').value.trim() || '(名称未設定)';
+    const monthly = parseInt(el.querySelector('.r-monthly').value) || 0;
+    const endMonth = el.querySelector('.r-end').value;
+    const rental = { name, monthly, endMonth };
+    if (isNew) {
+      rental.discountMonthly = parseInt(el.querySelector('.r-discount-monthly')?.value) || 0;
+      rental.discountMonths = parseInt(el.querySelector('.r-discount-months')?.value) || 0;
+    }
+    if (monthly > 0 && endMonth) {
+      rentals.push(rental);
+    }
+  });
+  return rentals;
+}
+
+function showError(msg) {
+  const el = document.getElementById('errorMsg');
+  el.textContent = msg;
+  el.style.display = 'block';
+  document.getElementById('resultSection').classList.remove('active');
+}
+
+function hideError() {
+  document.getElementById('errorMsg').style.display = 'none';
+}
+
+function calculate() {
+  hideError();
+
+  const currentPoints = parseInt(document.getElementById('currentPoints').value) || 0;
+  const existingRentals = parseRentals('existingRentals', false);
+  const newRentals = parseRentals('newRentals', true);
+
+  if (newRentals.length === 0) {
+    showError('新規レンタル家電の月額ポイントと支払い完了予定月を入力してください。');
+    return;
+  }
+
+  const currentMonth = getCurrentMonth();
+
+  // Find the last end month
+  let lastMonth = currentMonth;
+  [...existingRentals, ...newRentals].forEach(r => {
+    if (r.endMonth > lastMonth) lastMonth = r.endMonth;
+  });
+
+  const months = generateMonths(currentMonth, lastMonth);
+
+  const results = [];
+  let carryover = currentPoints;
+
+  months.forEach((month, index) => {
+    const supply = MONTHLY_SUPPLY;
+
+    // Existing rental payments
+    let existingTotal = 0;
+    existingRentals.forEach(r => {
+      if (month <= r.endMonth) {
+        existingTotal += r.monthly;
+      }
+    });
+
+    // New rental payments
+    let newTotal = 0;
+    newRentals.forEach(r => {
+      if (month <= r.endMonth) {
+        if (r.discountMonths > 0 && index < r.discountMonths) {
+          newTotal += r.discountMonthly;
+        } else {
+          newTotal += r.monthly;
+        }
+      }
+    });
+
+    const totalPayment = existingTotal + newTotal;
+    const remaining = Math.min(carryover + supply - totalPayment, MAX_CARRYOVER);
+
+    results.push({
+      month,
+      carryover,
+      supply,
+      existingTotal,
+      newTotal,
+      totalPayment,
+      remaining
+    });
+
+    // Next month's carryover
+    carryover = remaining;
+  });
+
+  calculatedResults = results;
+  calculatedExistingNames = existingRentals.map(r => `${r.name}(${r.monthly.toLocaleString('ja-JP')})`);
+  calculatedNewNames = newRentals.map(r => `${r.name}(${r.monthly.toLocaleString('ja-JP')})`);
+  renderTable(results);
+}
+
+function renderTable(results) {
+  const wrapper = document.getElementById('tableWrapper');
+
+  let html = '<table><thead><tr>';
+  html += '<th>月</th>';
+  html += '<th>前月繰越</th>';
+  html += '<th>支給</th>';
+  html += '<th>既存支払い</th>';
+  html += '<th>新規支払い</th>';
+  html += '<th>合計支払い</th>';
+  html += '<th>残ポイント</th>';
+  html += '</tr></thead><tbody>';
+
+  results.forEach(r => {
+    const negClass = r.remaining < 0 ? ' class="negative"' : '';
+    const zeroExisting = r.existingTotal === 0 ? ' class="zero-payment"' : '';
+    const zeroNew = r.newTotal === 0 ? ' class="zero-payment"' : '';
+    const zeroTotal = r.totalPayment === 0 ? ' class="zero-payment"' : '';
+
+    html += '<tr>';
+    html += `<td>${formatMonth(r.month)}</td>`;
+    html += `<td>${formatPt(r.carryover)}</td>`;
+    html += `<td>${formatPt(r.supply)}</td>`;
+    html += `<td${zeroExisting}>${r.existingTotal === 0 ? '-' : formatPt(r.existingTotal)}</td>`;
+    html += `<td${zeroNew}>${r.newTotal === 0 ? '-' : formatPt(r.newTotal)}</td>`;
+    html += `<td${zeroTotal}>${r.totalPayment === 0 ? '-' : formatPt(r.totalPayment)}</td>`;
+    html += `<td${negClass}>${formatPt(r.remaining)}</td>`;
+    html += '</tr>';
+  });
+
+  html += '</tbody></table>';
+  wrapper.innerHTML = html;
+  document.getElementById('resultSection').classList.add('active');
+
+  // Scroll to results
+  document.getElementById('resultSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function downloadCSV() {
+  if (calculatedResults.length === 0) return;
+
+  const BOM = '\uFEFF';
+  const headers = ['月', '前月繰越', '支給ポイント', '既存支払い月額', '新規レンタル支払い月額', '合計支払い月額', '残ポイント'];
+
+  let csv = BOM + headers.join(',') + '\n';
+
+  // Add rental info as comments
+  if (calculatedExistingNames.length > 0) {
+    csv += `# 既存レンタル: ${calculatedExistingNames.join(' / ')}\n`;
+  }
+  if (calculatedNewNames.length > 0) {
+    csv += `# 新規レンタル: ${calculatedNewNames.join(' / ')}\n`;
+  }
+
+  calculatedResults.forEach(r => {
+    csv += [
+      r.month,
+      r.carryover,
+      r.supply,
+      r.existingTotal,
+      r.newTotal,
+      r.totalPayment,
+      r.remaining
+    ].join(',') + '\n';
+  });
+
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `福利厚生ポイント計算_${getCurrentMonth()}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// Initialize with one existing and one new rental
+addExistingRental();
+addNewRental();
+</script>
+</body>
+</html>
