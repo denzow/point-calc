@@ -394,8 +394,8 @@ function calculate() {
   });
 
   calculatedResults = results;
-  calculatedExistingNames = existingRentals.map(r => `${r.name}(${r.monthly.toLocaleString('ja-JP')})`);
-  calculatedNewNames = newRentals.map(r => `${r.name}(${r.monthly.toLocaleString('ja-JP')})`);
+  calculatedExistingNames = existingRentals.map(r => `${r.name}(${r.monthly})`);
+  calculatedNewNames = newRentals.map(r => `${r.name}(${r.monthly})`);
   renderTable(results);
 }
 
