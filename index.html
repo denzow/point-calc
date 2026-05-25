@@ -150,7 +150,8 @@
   tr:hover { background: #eef4fd; }
   .negative { color: #d14; font-weight: 600; }
   .zero-payment { color: #aaa; }
-  .actions { margin-top: 16px; display: flex; gap: 12px; }
+  .result-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .result-header h2 { margin-bottom: 0; }
   .btn {
     padding: 10px 20px;
     border: none;
@@ -207,11 +208,11 @@
 
   <div id="resultSection" class="result-section">
     <div class="card">
-      <h2>計算結果</h2>
-      <div class="table-wrapper" id="tableWrapper"></div>
-      <div class="actions">
+      <div class="result-header">
+        <h2>計算結果</h2>
         <button class="btn btn-csv" onclick="downloadCSV()">CSV ダウンロード</button>
       </div>
+      <div class="table-wrapper" id="tableWrapper"></div>
     </div>
   </div>
 </div>
